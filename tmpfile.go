@@ -38,6 +38,7 @@ func nextRandom() string {
 	rngMutex.Lock()
 	r := rand.Uint64()
 	rngMutex.Unlock()
+
 	return strconv.FormatUint(r, 16)
 }
 
@@ -50,29 +51,39 @@ func New(dir, prefix, suffix string) (f *os.File, err error) {
 		dir = os.TempDir()
 	}
 
-	nConflicts := 0
 	var fwd tmpos.FileWithDescriptor
+
+	nConflicts := 0
+
 	for i := 0; i < totalRetry; i++ {
 		name := filepath.Join(dir, prefix+nextRandom()+suffix)
-		fwd, err = tmpos.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, tempFileMode)
-		if os.IsExist(err) {
+
+		if fwd, err = tmpos.OpenFile(
+			name,
+			os.O_RDWR|os.O_CREATE|os.O_EXCL,
+			tempFileMode,
+		); os.IsExist(err) {
 			if nConflicts++; nConflicts > reseedTreshold {
 				reseed()
 			}
+
 			continue
 		}
+
 		break
 	}
+
 	if err = syscall.Unlink(fwd.Name()); err != nil {
 		err = errors.Wrapf(err, "Could not unlink: %v", fwd)
 		return
 	}
 
 	path := procFilePath(fwd.Fd)
-	f, err = os.Create(path)
-	if err != nil {
+
+	if f, err = os.Create(path); err != nil {
 		err = errors.Wrapf(err, "Could not create: %s", path)
 		return
 	}
-	return
+
+	return f, err
 }

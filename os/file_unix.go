@@ -11,6 +11,7 @@ import (
 // OpenFile opens a file an returns a struct containing the file and its file descriptor
 func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, err error) {
 	setSticky := false
+
 	if !supportsCreateWithStickyBit && flag&os.O_CREATE != 0 && perm&os.ModeSticky != 0 {
 		if _, err = os.Stat(name); os.IsNotExist(err) {
 			setSticky = true
@@ -31,12 +32,15 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 		}
 
 		err = &os.PathError{Op: "open", Path: name, Err: err}
+
 		return
 	}
 
 	// open(2) itself won't handle the sticky bit on *BSD and Solaris
 	if setSticky {
-		setStickyBit(name)
+		if err = setStickyBit(name); err != nil {
+			return
+		}
 	}
 
 	// There's a race here with fork/exec, which we are
@@ -47,5 +51,5 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 
 	fwd.File = os.NewFile(uintptr(fwd.Fd), name)
 
-	return
+	return fwd, err
 }

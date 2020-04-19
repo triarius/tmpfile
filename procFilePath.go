@@ -5,5 +5,5 @@ package tmpfile
 import "strconv"
 
 func procFilePath(fd int) string {
-	return "/proc/self/fd/"+strconv.Itoa(fd)
+	return "/proc/self/fd/" + strconv.Itoa(fd)
 }

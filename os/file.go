@@ -8,5 +8,6 @@ func setStickyBit(name string) error {
 	if err != nil {
 		return err
 	}
+
 	return os.Chmod(name, fi.Mode()|os.ModeSticky)
 }
