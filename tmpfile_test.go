@@ -1,10 +1,10 @@
 package tmpfile_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/triarius/tmpfile"
@@ -14,6 +14,10 @@ func TestNew(t *testing.T) {
 	f, err := tmpfile.New("", "tempTest", "")
 	if err != nil {
 		t.Fatalf("Error creating tempfile: %+v\n", err)
+	}
+
+	if strings.HasPrefix(f.Name(), "/tmp") {
+		t.Fatalf("File handle is not in proc FS: name: %s", f.Name())
 	}
 
 	if _, err = f.WriteString("test"); err != nil {
@@ -35,7 +39,9 @@ func TestNew(t *testing.T) {
 func TestChans(t *testing.T) {
 	fChan := make(chan *os.File)
 
-	for i := 0; i < 10; i++ {
+	const numFiles = 10
+
+	for i := 0; i < numFiles; i++ {
 		go func(i int, fChan chan *os.File) {
 			var f *os.File
 
@@ -52,7 +58,9 @@ func TestChans(t *testing.T) {
 		}(i, fChan)
 	}
 
-	for i := 0; i < 10; i++ {
+	var results [numFiles]bool
+
+	for i := 0; i < numFiles; i++ {
 		f := <-fChan
 		if f == nil {
 			t.Fatalf("No file received.")
@@ -66,6 +74,16 @@ func TestChans(t *testing.T) {
 		f.Close()
 
 		text := string(content)
-		fmt.Println(text)
+		pos, err := strconv.Atoi(text)
+		if err != nil {
+			t.Fatalf("Content not a number: %s", content)
+		}
+		results[pos] = true
+	}
+
+	for i := 0; i < numFiles; i++ {
+		if !results[i] {
+			t.Errorf("File %d was not read back.", i)
+		}
 	}
 }
