@@ -1,6 +1,6 @@
 // +build aix darwin dragonfly freebsd js,wasm linux netbsd openbsd solaris
 
-package tmpfile
+package os
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"syscall"
 )
 
-// OpenFile opens a file an return a struct containing the file and it's file descriptor
+// OpenFile opens a file an returns a struct containing the file and its file descriptor
 func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, err error) {
 	setSticky := false
 	if !supportsCreateWithStickyBit && flag&os.O_CREATE != 0 && perm&os.ModeSticky != 0 {

@@ -1,4 +1,4 @@
-package tmpfile
+package os
 
 import "os"
 

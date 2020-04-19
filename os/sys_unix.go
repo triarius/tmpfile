@@ -1,6 +1,6 @@
 // +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
-package tmpfile
+package os
 
 // supportsCloseOnExec reports whether the platform supports the
 // O_CLOEXEC flag.

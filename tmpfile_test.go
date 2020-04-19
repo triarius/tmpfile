@@ -4,39 +4,58 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"syscall"
+	"strconv"
 	"testing"
 
 	"github.com/triarius/tmpfile"
 )
 
-func testChans(t *testing.T) {
+func TestNew(t *testing.T) {
+    f, err := tmpfile.New("", "tempTest", "")
+    if err != nil {
+        t.Fatalf("Error creating tempfile: %+v\n", err)
+    }
+    if _, err = f.WriteString("test"); err != nil {
+        t.Fatalf("Could not write to %+v", f)
+    }
+
+    content, err := ioutil.ReadFile(f.Name())
+    if err != nil {
+        t.Fatalf("could not read: " + f.Name())
+    }
+    f.Close()
+
+    if string(content) != "test" {
+        t.Fatalf("Read content mismatch, expected: %s, found: %s", "test", string(content))
+    }
+}
+
+func TestChans(t *testing.T) {
 	fChan := make(chan *os.File)
 	for i := 0; i < 10; i++ {
 		go func(i int, fChan chan *os.File) {
 			var f *os.File
 			defer func() { fChan <- f }()
 
-			f, err := tmpfile.TempFile("", "tempTest", "")
+			f, err := tmpfile.New("", "tempTest", "")
 			if err != nil {
-				fmt.Printf("Error creating tempfile: %e\n", err)
-				return
+				t.Fatalf("Error creating tempfile: %e\n", err)
 			}
-
-			syscall.Write(fd, []byte(fmt.Sprintf("Wrote to file: %d, name: %s", i, name)))
-
-			fmt.Printf("%d: %s\n", fd, name)
-		}(i, fdChan)
+			f.WriteString(strconv.Itoa(i))
+		}(i, fChan)
 	}
 
 	for i := 0; i < 10; i++ {
-		//fd := <-fdChan
+		f := <-fChan
+        if f == nil {
+            t.Fatalf("No file recieved.")
+        }
 
-		content, err := ioutil.ReadFile(name)
+		content, err := ioutil.ReadFile(f.Name())
 		if err != nil {
-			panic("could not read: " + name)
+			t.Fatalf("could not read: " + f.Name())
 		}
-		syscall.Close(fd)
+		f.Close()
 		text := string(content)
 		fmt.Println(text)
 	}

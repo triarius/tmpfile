@@ -7,6 +7,6 @@
 // +build !openbsd
 // +build !solaris
 
-package tmpfile
+package os
 
 const supportsCreateWithStickyBit = true

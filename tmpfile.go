@@ -1,3 +1,5 @@
+// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+
 package tmpfile
 
 import (
@@ -6,7 +8,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/pkg/errors"
 
 	tmpos "github.com/triarius/tmpfile/os"
 )
@@ -38,12 +43,15 @@ func nextRandom() string {
 
 // New creates a temporary file and returns a file descriptor and name
 // If dir is empty, it will use the os's Temp directory
-func New(dir, prefix, suffix string) (fwd tmpos.FileWithDescriptor, err error) {
+// The temporary file name will be randomly generated hex number sandwiched
+// by the prefix and suffix
+func New(dir, prefix, suffix string) (f *os.File, err error) {
 	if dir == "" {
 		dir = os.TempDir()
 	}
 
 	nConflicts := 0
+	var fwd tmpos.FileWithDescriptor
 	for i := 0; i < totalRetry; i++ {
 		name := filepath.Join(dir, prefix+nextRandom()+suffix)
 		fwd, err = tmpos.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, tempFileMode)
@@ -54,6 +62,17 @@ func New(dir, prefix, suffix string) (fwd tmpos.FileWithDescriptor, err error) {
 			continue
 		}
 		break
+	}
+	if err = syscall.Unlink(fwd.Name()); err != nil {
+		err = errors.Wrapf(err, "Could not unlink: %v", fwd)
+		return
+	}
+
+	path := procFilePath(fwd.Fd)
+	f, err = os.Create(path)
+	if err != nil {
+		err = errors.Wrapf(err, "Could not create: %s", path)
+		return
 	}
 	return
 }

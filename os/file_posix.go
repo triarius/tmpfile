@@ -1,6 +1,6 @@
 // +build aix darwin dragonfly freebsd js,wasm linux netbsd openbsd solaris windows
 
-package tmpfile
+package os
 
 import (
 	"os"
