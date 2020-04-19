@@ -3,6 +3,7 @@ package tmpfile_test
 import (
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -33,6 +34,30 @@ func TestNew(t *testing.T) {
 
 	if string(content) != "test" {
 		t.Fatalf("Read content mismatch, expected: %s, found: %s", "test", string(content))
+	}
+}
+
+func TestExec(t *testing.T) {
+	const textToWrite = "test"
+
+	f, err := tmpfile.New("", "tempTest", "")
+	if err != nil {
+		t.Fatalf("Error creating tempfile: %+v\n", err)
+	}
+
+	if _, err = f.WriteString(textToWrite); err != nil {
+		t.Fatalf("Could not write to %+v", f)
+	}
+
+	fileName := f.Name()
+
+	out, err := exec.Command("cat", fileName).Output()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if string(out) != textToWrite {
+		t.Fatalf("Expected %s, read %s", textToWrite, out)
 	}
 }
 
@@ -74,10 +99,12 @@ func TestChans(t *testing.T) {
 		f.Close()
 
 		text := string(content)
+
 		pos, err := strconv.Atoi(text)
 		if err != nil {
 			t.Fatalf("Content not a number: %s", content)
 		}
+
 		results[pos] = true
 	}
 

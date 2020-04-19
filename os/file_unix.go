@@ -9,7 +9,17 @@ import (
 )
 
 // OpenFile opens a file an returns a struct containing the file and its file descriptor
-func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, err error) {
+func OpenFile(name string, flag int, perm os.FileMode) (file *os.File, err error) {
+	file, _, err = openFile(name, flag, perm)
+	return
+}
+
+func OpenFileWithDescriptor(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, err error) {
+	fwd.File, fwd.fd, err = openFile(name, flag, perm)
+	return
+}
+
+func openFile(name string, flag int, perm os.FileMode) (f *os.File, fd int, err error) {
 	setSticky := false
 
 	if !supportsCreateWithStickyBit && flag&os.O_CREATE != 0 && perm&os.ModeSticky != 0 {
@@ -18,15 +28,15 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 		}
 	}
 
-	for {
-		fwd.fd, err = syscall.Open(name, flag|syscall.O_CLOEXEC, syscallMode(perm))
+	for { // explicitly allow leaking file discriptor to subprocesses
+		fd, err = syscall.Open(name, flag&(^syscall.O_CLOEXEC), syscallMode(perm))
 		if err == nil {
 			break
 		}
 
-		// On OS X, sigaction(2) doesn't guarantee that SA_RESTART will cause
-		// open(2) to be restarted for regular files. This is easy to reproduce on
-		// fuse file systems (see https://golang.org/issue/11180).
+		// On OS X, sigaction(2) doesn't guarantee that SA_RESTART will cause open(2) to be
+		// restarted for regular files. This is easy to reproduce on fuse file systems
+		// (see https://golang.org/issue/11180).
 		if runtime.GOOS == "darwin" && err == syscall.EINTR {
 			continue
 		}
@@ -43,13 +53,7 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 		}
 	}
 
-	// There's a race here with fork/exec, which we are
-	// content to live with. See ../syscall/exec_unix.go.
-	if !supportsCloseOnExec {
-		syscall.CloseOnExec(fwd.Fd())
-	}
+	f = os.NewFile(uintptr(fd), name)
 
-	fwd.File = os.NewFile(uintptr(fwd.Fd()), name)
-
-	return fwd, err
+	return f, fd, err
 }

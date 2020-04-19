@@ -59,7 +59,7 @@ func New(dir, prefix, suffix string) (f *os.File, err error) {
 	for i := 0; i < totalRetry; i++ {
 		name := filepath.Join(dir, prefix+nextRandom()+suffix)
 
-		if fwd, err = tmpos.OpenFile(
+		if fwd, err = tmpos.OpenFileWithDescriptor(
 			name,
 			os.O_RDWR|os.O_CREATE|os.O_EXCL,
 			tempFileMode,
@@ -80,8 +80,11 @@ func New(dir, prefix, suffix string) (f *os.File, err error) {
 	}
 
 	path := fwd.ProcFilePath()
-
-	if f, err = os.Create(path); err != nil {
+	if f, err = tmpos.OpenFile(
+		path,
+		os.O_RDWR|os.O_CREATE|os.O_TRUNC,
+		tempFileMode,
+	); err != nil {
 		err = errors.Wrapf(err, "Could not create: %s", path)
 		return
 	}
