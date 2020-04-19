@@ -22,7 +22,8 @@ const (
 	tempFileMode   = 0600
 )
 
-// While obtaining random numbers from the source is concurency safe, reseeding is not:
+// While obtaining random numbers from the source is concurency safe,
+// reseeding is not:
 // > Seed should not be called concurrently with any other Rand Method
 // https://golang.org/src/math/rand/rand.go?s=2477:2508#L64
 // Therefore, we need to mutex all Rand methods
@@ -78,7 +79,7 @@ func New(dir, prefix, suffix string) (f *os.File, err error) {
 		return
 	}
 
-	path := procFilePath(fwd.Fd)
+	path := fwd.ProcFilePath()
 
 	if f, err = os.Create(path); err != nil {
 		err = errors.Wrapf(err, "Could not create: %s", path)

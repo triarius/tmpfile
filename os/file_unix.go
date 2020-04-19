@@ -19,7 +19,7 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 	}
 
 	for {
-		fwd.Fd, err = syscall.Open(name, flag|syscall.O_CLOEXEC, syscallMode(perm))
+		fwd.fd, err = syscall.Open(name, flag|syscall.O_CLOEXEC, syscallMode(perm))
 		if err == nil {
 			break
 		}
@@ -46,10 +46,10 @@ func OpenFile(name string, flag int, perm os.FileMode) (fwd FileWithDescriptor, 
 	// There's a race here with fork/exec, which we are
 	// content to live with. See ../syscall/exec_unix.go.
 	if !supportsCloseOnExec {
-		syscall.CloseOnExec(fwd.Fd)
+		syscall.CloseOnExec(fwd.Fd())
 	}
 
-	fwd.File = os.NewFile(uintptr(fwd.Fd), name)
+	fwd.File = os.NewFile(uintptr(fwd.Fd()), name)
 
 	return fwd, err
 }
