@@ -4,7 +4,6 @@ package os
 
 import (
 	"os"
-	"runtime"
 	"syscall"
 )
 
@@ -33,9 +32,7 @@ func openFile(name string, flag int, perm os.FileMode) (f *os.File, fd int, err 
 	mode := syscallMode(perm)
 
 	for fd, err = syscall.Open(name, flag, mode); err != nil; fd, err = syscall.Open(name, flag, mode) {
-		// On OS X, sigaction(2) doesn't guarantee that SA_RESTART will cause open(2) to be restarted
-		// for regular files. This is easy to reproduce on fuse file systems (see https://golang.org/issue/11180).
-		if runtime.GOOS == "darwin" && err == syscall.EINTR {
+		if retrySAResart && err == syscall.EINTR {
 			continue
 		} else {
 			err = &os.PathError{Op: "open", Path: name, Err: err}
