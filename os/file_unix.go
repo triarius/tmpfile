@@ -28,8 +28,9 @@ func openFile(name string, flag int, perm os.FileMode) (f *os.File, fd int, err 
 		}
 	}
 
-	for { // explicitly allow leaking file discriptor to subprocesses
-		fd, err = syscall.Open(name, flag&(^syscall.O_CLOEXEC), syscallMode(perm))
+	for {
+		// explicitly allow leaking file discriptor to subprocesses
+		fd, err = syscall.Open(name, flag&^syscall.O_CLOEXEC, syscallMode(perm))
 		if err == nil {
 			break
 		}
