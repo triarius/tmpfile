@@ -28,23 +28,19 @@ func openFile(name string, flag int, perm os.FileMode) (f *os.File, fd int, err 
 		}
 	}
 
-	for {
-		// explicitly allow leaking file discriptor to subprocesses
-		fd, err = syscall.Open(name, flag&^syscall.O_CLOEXEC, syscallMode(perm))
-		if err == nil {
-			break
-		}
+	// explicitly allow leaking file discriptor to subprocesses
+	flag &= ^syscall.O_CLOEXEC
+	mode := syscallMode(perm)
 
-		// On OS X, sigaction(2) doesn't guarantee that SA_RESTART will cause open(2) to be
-		// restarted for regular files. This is easy to reproduce on fuse file systems
-		// (see https://golang.org/issue/11180).
+	for fd, err = syscall.Open(name, flag, mode); err != nil; fd, err = syscall.Open(name, flag, mode) {
+		// On OS X, sigaction(2) doesn't guarantee that SA_RESTART will cause open(2) to be restarted
+		// for regular files. This is easy to reproduce on fuse file systems (see https://golang.org/issue/11180).
 		if runtime.GOOS == "darwin" && err == syscall.EINTR {
 			continue
+		} else {
+			err = &os.PathError{Op: "open", Path: name, Err: err}
+			return
 		}
-
-		err = &os.PathError{Op: "open", Path: name, Err: err}
-
-		return
 	}
 
 	// open(2) itself won't handle the sticky bit on *BSD and Solaris
