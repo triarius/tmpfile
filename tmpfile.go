@@ -1,4 +1,4 @@
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+// +build linux
 
 package tmpfile
 
