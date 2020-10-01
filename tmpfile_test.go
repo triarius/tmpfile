@@ -12,7 +12,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	f, err := tmpfile.New("", "tempTest", "")
+	f, err := tmpfile.New("", false)
 	if err != nil {
 		t.Fatalf("Error creating tempfile: %+v\n", err)
 	}
@@ -40,7 +40,7 @@ func TestNew(t *testing.T) {
 func TestExec(t *testing.T) {
 	const textToWrite = "test"
 
-	f, err := tmpfile.New("", "tempTest", "")
+	f, err := tmpfile.New("", true)
 	if err != nil {
 		t.Fatalf("Error creating tempfile: %+v\n", err)
 	}
@@ -72,7 +72,7 @@ func TestChans(t *testing.T) {
 
 			defer func() { fChan <- f }()
 
-			f, err := tmpfile.New("", "tempTest", "")
+			f, err := tmpfile.New("", false)
 			if err != nil {
 				return
 			}
