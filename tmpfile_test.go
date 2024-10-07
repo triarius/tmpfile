@@ -1,7 +1,6 @@
 package tmpfile_test
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -25,7 +24,7 @@ func TestNew(t *testing.T) {
 		t.Fatalf("Could not write to %+v", f)
 	}
 
-	content, err := ioutil.ReadFile(f.Name())
+	content, err := os.ReadFile(f.Name())
 	if err != nil {
 		t.Fatalf("could not read: " + f.Name())
 	}
@@ -91,7 +90,7 @@ func TestChans(t *testing.T) {
 			t.Fatalf("No file received.")
 		}
 
-		content, err := ioutil.ReadFile(f.Name())
+		content, err := os.ReadFile(f.Name())
 		if err != nil {
 			t.Fatalf("could not read: " + f.Name())
 		}
