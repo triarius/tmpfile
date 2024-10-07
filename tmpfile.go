@@ -1,12 +1,13 @@
+//go:build linux
 // +build linux
 
 package tmpfile
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -24,11 +25,8 @@ func New(dir string, leakToSubProc bool) (f *os.File, err error) {
 
 	fd, err := unix.Open(dir, flags, 0600)
 	if err != nil {
-		err = errors.Wrapf(err, "Could not create temp file in: %s", dir)
-		return
+		return nil, fmt.Errorf("Could not create temp file in: %s: %w", dir, err)
 	}
 
-	f = os.NewFile(uintptr(fd), "/dev/fd/"+strconv.Itoa(fd))
-
-	return f, err
+	return os.NewFile(uintptr(fd), "/dev/fd/"+strconv.Itoa(fd)), nil
 }
