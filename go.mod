@@ -1,8 +1,5 @@
 module github.com/triarius/tmpfile
 
-go 1.15
+go 1.23
 
-require (
-	github.com/pkg/errors v0.9.1
-	golang.org/x/sys v0.26.0
-)
+require golang.org/x/sys v0.26.0
