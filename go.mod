@@ -1,5 +1,5 @@
 module github.com/triarius/tmpfile
 
-go 1.15
+go 1.23
 
 require golang.org/x/sys v0.26.0
