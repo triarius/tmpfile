@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 
 	content, err := os.ReadFile(f.Name())
 	if err != nil {
-		t.Fatalf("could not read: " + f.Name())
+		t.Fatalf("could not read: %s", f.Name())
 	}
 
 	f.Close()
@@ -92,7 +92,7 @@ func TestChans(t *testing.T) {
 
 		content, err := os.ReadFile(f.Name())
 		if err != nil {
-			t.Fatalf("could not read: " + f.Name())
+			t.Fatalf("could not read: %s", f.Name())
 		}
 
 		f.Close()
